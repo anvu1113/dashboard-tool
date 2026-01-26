@@ -17,19 +17,19 @@ services:
       DB_CONNECTION: mysql
       DB_HOST: host.docker.internal
       DB_PORT: 3306
-      DB_DATABASE: clothes_store
+      DB_DATABASE: dashboard_tool
       DB_USERNAME: root
       DB_PASSWORD: root
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - clothes-store-network
+      - dashboard-tool-network
 
   nuxt:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: clothes-store-nuxt
+    container_name: dashboard-tool-nuxt
     restart: unless-stopped
     working_dir: /app
     volumes:
@@ -44,8 +44,8 @@ services:
     depends_on:
       - laravel
     networks:
-      - clothes-store-network
+      - dashboard-tool-network
 
 networks:
-  clothes-store-network:
+  dashboard-tool-network:
     driver: bridge
