@@ -5,12 +5,12 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
           <div class="flex items-center">
-            <NuxtLink to="/" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
+            <NuxtLink to="/home" class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
               ExtensionHub
             </NuxtLink>
             <div class="hidden md:block ml-10">
               <div class="flex items-baseline space-x-4">
-                <NuxtLink to="/" active-class="text-white bg-gray-800" class="text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors">Home</NuxtLink>
+                <NuxtLink to="/home" active-class="text-white bg-gray-800" class="text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors">Home</NuxtLink>
                 <NuxtLink to="/features" active-class="text-white bg-gray-800" class="text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors">Tính năng</NuxtLink>
                 <NuxtLink to="/pricing" active-class="text-white bg-gray-800" class="text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors">Bảng giá</NuxtLink>
                 <NuxtLink to="/contact" active-class="text-white bg-gray-800" class="text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors">Liên hệ</NuxtLink>
