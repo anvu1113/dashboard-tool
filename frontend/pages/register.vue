@@ -141,7 +141,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Đăng ký - Clothes Store'
+  title: 'Đăng ký - Dashboard Tool'
 })
 
 const { register } = useAuth()

@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <NuxtLink to="/" class="text-xl font-bold text-primary">
-          Clothes Store
+          Dashboard Tool
         </NuxtLink>
 
         <!-- Navigation Menu -->
@@ -15,27 +15,6 @@
             active-class="text-primary font-semibold"
           >
             Trang chủ
-          </NuxtLink>
-          <NuxtLink 
-            to="/products" 
-            class="text-gray-dark hover:text-primary transition-colors"
-            active-class="text-primary font-semibold"
-          >
-            Sản phẩm
-          </NuxtLink>
-          <NuxtLink 
-            to="/order" 
-            class="text-gray-dark hover:text-primary transition-colors text-sm"
-            active-class="text-primary font-semibold"
-          >
-            Đặt hàng
-          </NuxtLink>
-          <NuxtLink 
-            to="/track-order" 
-            class="text-gray-dark hover:text-primary transition-colors text-sm"
-            active-class="text-primary font-semibold"
-          >
-            Tra cứu đơn
           </NuxtLink>
         </nav>
 
@@ -106,12 +85,8 @@
           </div>
           
           <!-- CTA Button (always visible) -->
-          <NuxtLink 
-            to="/products"
-            class="bg-primary text-white px-6 py-2 rounded hover:bg-primary-dark transition-colors font-medium"
-          >
-            Xem sản phẩm
-          </NuxtLink>
+          <!-- CTA Button (always visible) -->
+          <!-- Removed for Dashboard Tool -->
         </div>
 
         <!-- Mobile Menu Button -->
@@ -137,30 +112,6 @@
             active-class="text-primary font-semibold"
           >
             Trang chủ
-          </NuxtLink>
-          <NuxtLink 
-            to="/products" 
-            @click="mobileMenuOpen = false"
-            class="text-gray-dark hover:text-primary transition-colors"
-            active-class="text-primary font-semibold"
-          >
-            Sản phẩm
-          </NuxtLink>
-          <NuxtLink 
-            to="/order" 
-            @click="mobileMenuOpen = false"
-            class="text-gray-dark hover:text-primary transition-colors text-sm"
-            active-class="text-primary font-semibold"
-          >
-            Đặt hàng
-          </NuxtLink>
-          <NuxtLink 
-            to="/track-order" 
-            @click="mobileMenuOpen = false"
-            class="text-gray-dark hover:text-primary transition-colors text-sm"
-            active-class="text-primary font-semibold"
-          >
-            Tra cứu đơn
           </NuxtLink>
         </nav>
       </div>

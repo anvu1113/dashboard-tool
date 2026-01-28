@@ -4,5 +4,7 @@
 
 /* Add any global styles here if needed */
 body {
-    @apply bg-gray-50;
+    background-color: theme('colors.bg.dark');
+    color: theme('colors.text.DEFAULT');
+    @apply antialiased;
 }

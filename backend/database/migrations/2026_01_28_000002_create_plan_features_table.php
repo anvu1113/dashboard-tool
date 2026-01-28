@@ -8,18 +8,17 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('usage_logs', function (Blueprint $table) {
+        Schema::create('plan_features', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('license_id')->constrained()->onDelete('cascade');
-            $table->string('endpoint');
-            $table->string('ip_address')->nullable();
-            $table->json('metadata')->nullable();
+            $table->foreignId('plan_id')->constrained()->cascadeOnDelete();
+            $table->string('key'); // max_products_per_day
+            $table->string('value'); // 10, true
             $table->timestamps();
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('usage_logs');
+        Schema::dropIfExists('plan_features');
     }
 };

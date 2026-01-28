@@ -18,6 +18,7 @@ Route::prefix('auth')->group(function () {
 Route::prefix('auth')->middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    Route::get('/me/subscription', [App\Http\Controllers\Api\SubscriptionController::class, 'me']);
 });
 
 // Extension Routes

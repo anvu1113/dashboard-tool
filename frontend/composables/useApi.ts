@@ -8,7 +8,7 @@ export const useApi = () => {
   const getApiBase = () => {
     if (process.client) {
       // Browser always uses localhost
-      return 'http://localhost:8000'
+      return 'http://localhost:8001'
     }
     // Server-side can use the configured URL
     return config.public.apiBase || 'http://localhost:8000'

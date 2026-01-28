@@ -73,7 +73,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Quên mật khẩu - Clothes Store'
+  title: 'Quên mật khẩu - Dashboard Tool'
 })
 
 const { forgotPassword } = useAuth()

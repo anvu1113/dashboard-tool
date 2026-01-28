@@ -118,7 +118,7 @@ definePageMeta({
 })
 
 useHead({
-  title: 'Đặt lại mật khẩu - Clothes Store'
+  title: 'Đặt lại mật khẩu - Dashboard Tool'
 })
 
 const route = useRoute()

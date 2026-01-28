@@ -159,7 +159,7 @@ class AuthController extends Controller
 
         // Customize reset URL to point to frontend
         ResetPassword::createUrlUsing(function ($user, string $token) {
-            $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:3001');
             return $frontendUrl . '/reset-password?token=' . $token . '&email=' . urlencode($user->email);
         });
 

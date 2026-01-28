@@ -11,10 +11,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: {
-          DEFAULT: '#111111',
-          dark: '#000000',
+        // Dark Mode Palette
+        bg: {
+          dark: '#0f1115',
         },
+        card: {
+          dark: '#161a22',
+        },
+        primary: {
+          DEFAULT: '#4f8cff',
+          hover: '#3a7bd5',
+        },
+        border: {
+          dark: '#242b3a',
+        },
+        text: {
+          DEFAULT: '#ffffff',
+          muted: '#9ca3af',
+        },
+        // Existing colors to keep compatibility if needed, but primary overrides
         gray: {
           50: '#F9FAFB',
           100: '#F3F4F6',

@@ -10,18 +10,18 @@ class UsageLog extends Model
     use HasFactory;
 
     protected $fillable = [
-        'license_id',
-        'endpoint',
-        'ip_address',
-        'metadata',
+        'user_id',
+        'feature_key',
+        'count',
+        'date',
     ];
 
     protected $casts = [
-        'metadata' => 'array',
+        'date' => 'date',
     ];
 
-    public function license()
+    public function user()
     {
-        return $this->belongsTo(License::class);
+        return $this->belongsTo(User::class);
     }
 }
