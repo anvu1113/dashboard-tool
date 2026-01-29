@@ -26,6 +26,15 @@
           </svg>
           {{ loading ? 'Đang xử lý...' : 'Đăng nhập' }}
         </button>
+
+        <div class="text-center mt-6">
+          <p class="text-gray-400 text-sm">
+            Chưa có tài khoản?
+            <NuxtLink to="/admin/register" class="text-primary hover:text-primary-hover font-bold transition-colors">
+              Đăng ký ngay
+            </NuxtLink>
+          </p>
+        </div>
       </form>
     </div>
   </div>

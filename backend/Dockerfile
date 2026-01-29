@@ -1,41 +1,19 @@
-FROM php:8.2-cli
+FROM python:3.10-slim
 
-# Set working directory
-WORKDIR /var/www/html
+WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd \
-    && docker-php-ext-enable pdo_mysql mbstring exif pcntl bcmath gd
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Install python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy existing application directory permissions
-RUN chown -R www-data:www-data /var/www/html
+# Copy application code
+COPY . .
 
-# Expose port 8000
-EXPOSE 8000
-
-# Start Laravel development server
-CMD php artisan serve --host=0.0.0.0 --port=8000
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Run the application
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

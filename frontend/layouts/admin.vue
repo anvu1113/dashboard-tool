@@ -47,7 +47,7 @@
       </nav>
 
        <div class="absolute bottom-0 w-full p-4 border-t border-border-dark">
-         <button class="flex items-center gap-3 px-4 py-2 w-full text-red-500 hover:text-red-400 hover:bg-gray-800 rounded-lg transition-colors">
+         <button @click="handleLogout" class="flex items-center gap-3 px-4 py-2 w-full text-red-500 hover:text-red-400 hover:bg-gray-800 rounded-lg transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
             </svg>
@@ -64,3 +64,24 @@
     </main>
   </div>
 </template>
+
+<script setup>
+const router = useRouter()
+
+const handleLogout = async () => {
+  try {
+    // Call backend API if needed (e.g., to invalidate token)
+    // await useFetch('/api/auth/logout', { method: 'POST' })
+    
+    // Clear auth state (mock or real)
+    // const auth = useAuthStore()
+    // auth.logout()
+    
+    // For now, simply redirect
+    router.push('/admin/login')
+  } catch (e) {
+    console.error('Logout error', e)
+    router.push('/admin/login')
+  }
+}
+</script>

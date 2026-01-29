@@ -5,8 +5,12 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css', '~/assets/css/vue-select.css'],
   runtimeConfig: {
     public: {
-      // Always use localhost for client-side API calls (browser can't resolve docker hostnames)
-      apiBase: process.env.API_BASE_URL || 'http://localhost:8000'
+      apiBase: '' // Use relative path, handled by proxy
+    }
+  },
+  nitro: {
+    routeRules: {
+      '/api/**': { proxy: 'http://api:8000/api/**' }
     }
   },
   build: {

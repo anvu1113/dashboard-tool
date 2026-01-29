@@ -1,191 +1,122 @@
 <template>
-  <div class="bg-white min-h-screen py-12 md:py-16">
-    <div class="container mx-auto px-4">
-      <div class="max-w-md mx-auto">
-        <!-- Header -->
-        <div class="text-center mb-8">
-          <h1 class="text-3xl md:text-4xl font-bold text-primary mb-4">
-            Đăng ký
-          </h1>
-          <p class="text-gray-dark">
-            Tạo tài khoản để mua sắm dễ dàng hơn
+  <div class="min-h-screen flex items-center justify-center bg-bg-dark text-text">
+    <div class="w-full max-w-md p-8 bg-card-dark border border-gray-700 rounded-xl shadow-2xl">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent mb-2">
+          Đăng Ký
+        </h1>
+        <p class="text-gray-400">Tạo tài khoản để bắt đầu sử dụng</p>
+      </div>
+
+      <form @submit.prevent="handleRegister" class="space-y-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Họ tên</label>
+          <input type="text" v-model="name" class="block w-full bg-bg-dark border border-gray-600 text-white rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none" required placeholder="Nguyễn Văn A">
+        </div>
+
+        <div>
+           <label class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+           <input type="email" v-model="email" class="block w-full bg-bg-dark border border-gray-600 text-white rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none" required placeholder="admin@example.com">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-300 mb-2">Mật khẩu</label>
+          <input type="password" v-model="password" class="block w-full bg-bg-dark border border-gray-600 text-white rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none" required placeholder="••••••••">
+        </div>
+
+        <div>
+           <label class="block text-sm font-medium text-gray-300 mb-2">Xác nhận mật khẩu</label>
+           <input type="password" v-model="confirmPassword" class="block w-full bg-bg-dark border border-gray-600 text-white rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none" required placeholder="••••••••">
+        </div>
+
+        <button type="submit" :disabled="loading" class="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-lg shadow-lg transition-all flex justify-center items-center">
+           <svg v-if="loading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ loading ? 'Đang xử lý...' : 'Tạo tài khoản' }}
+        </button>
+
+        <div class="text-center mt-6">
+          <p class="text-gray-400 text-sm">
+            Đã có tài khoản?
+            <NuxtLink to="/login" class="text-primary hover:text-primary-hover font-bold transition-colors">
+              Đăng nhập ngay
+            </NuxtLink>
           </p>
         </div>
-
-        <!-- Register Form -->
-        <div class="bg-white border border-gray-light rounded-lg p-6 md:p-8">
-          <form @submit.prevent="handleRegister" class="space-y-6">
-            <!-- Name -->
-            <div>
-              <label for="name" class="block text-sm font-semibold text-primary mb-2">
-                Họ và tên <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="name"
-                v-model="form.name"
-                type="text"
-                required
-                placeholder="Nguyễn Văn A"
-                class="w-full px-4 py-3 border border-gray-light rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                :class="{ 'border-red-500': errors.name }"
-              />
-              <p v-if="errors.name" class="text-red-500 text-sm mt-1">{{ errors.name }}</p>
-            </div>
-
-            <!-- Email -->
-            <div>
-              <label for="email" class="block text-sm font-semibold text-primary mb-2">
-                Email <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="email"
-                v-model="form.email"
-                type="email"
-                required
-                placeholder="your@email.com"
-                class="w-full px-4 py-3 border border-gray-light rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                :class="{ 'border-red-500': errors.email }"
-              />
-              <p v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</p>
-            </div>
-
-            <!-- Phone -->
-            <div>
-              <label for="phone" class="block text-sm font-semibold text-primary mb-2">
-                Số điện thoại
-              </label>
-              <input
-                id="phone"
-                v-model="form.phone"
-                type="tel"
-                placeholder="0901234567"
-                class="w-full px-4 py-3 border border-gray-light rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                :class="{ 'border-red-500': errors.phone }"
-              />
-              <p v-if="errors.phone" class="text-red-500 text-sm mt-1">{{ errors.phone }}</p>
-            </div>
-
-            <!-- Password -->
-            <div>
-              <label for="password" class="block text-sm font-semibold text-primary mb-2">
-                Mật khẩu <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="password"
-                v-model="form.password"
-                type="password"
-                required
-                placeholder="Tối thiểu 8 ký tự"
-                class="w-full px-4 py-3 border border-gray-light rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                :class="{ 'border-red-500': errors.password }"
-              />
-              <p v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</p>
-            </div>
-
-            <!-- Confirm Password -->
-            <div>
-              <label for="password_confirmation" class="block text-sm font-semibold text-primary mb-2">
-                Xác nhận mật khẩu <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="password_confirmation"
-                v-model="form.password_confirmation"
-                type="password"
-                required
-                placeholder="Nhập lại mật khẩu"
-                class="w-full px-4 py-3 border border-gray-light rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                :class="{ 'border-red-500': errors.password_confirmation }"
-              />
-              <p v-if="errors.password_confirmation" class="text-red-500 text-sm mt-1">{{ errors.password_confirmation }}</p>
-            </div>
-
-            <!-- Submit Button -->
-            <button
-              type="submit"
-              :disabled="isLoading"
-              class="w-full bg-primary text-white px-6 py-4 rounded font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-lg"
-            >
-              {{ isLoading ? 'Đang đăng ký...' : 'Đăng ký' }}
-            </button>
-          </form>
-
-          <!-- Error Message -->
-          <div v-if="error" class="mt-6 p-4 bg-red-50 border border-red-200 rounded text-red-800">
-            <p class="text-sm">{{ error }}</p>
-          </div>
-
-          <!-- Success Message -->
-          <div v-if="showSuccess" class="mt-6 p-4 bg-green-50 border border-green-200 rounded text-green-800">
-            <p class="text-sm">Đăng ký thành công! Đang chuyển hướng...</p>
-          </div>
-
-          <!-- Login Link -->
-          <div class="mt-6 text-center">
-            <p class="text-gray-dark text-sm">
-              Đã có tài khoản?
-              <NuxtLink to="/login" class="text-primary hover:underline font-semibold">
-                Đăng nhập ngay
-              </NuxtLink>
-            </p>
-          </div>
-        </div>
-      </div>
+      </form>
     </div>
   </div>
 </template>
 
 <script setup>
 definePageMeta({
-  layout: 'default',
-  middleware: 'guest'
+  layout: false
 })
 
-useHead({
-  title: 'Đăng ký - Dashboard Tool'
-})
-
-const { register } = useAuth()
+const name = ref('')
+const email = ref('')
+const password = ref('')
+const confirmPassword = ref('')
+const loading = ref(false)
 const router = useRouter()
 
-const form = ref({
-  name: '',
-  email: '',
-  phone: '',
-  password: '',
-  password_confirmation: ''
-})
-
-const errors = ref({})
-const error = ref('')
-const isLoading = ref(false)
-const showSuccess = ref(false)
+const modal = useModal()
 
 const handleRegister = async () => {
-  errors.value = {}
-  error.value = ''
-  isLoading.value = true
-  showSuccess.value = false
-
-  const result = await register(form.value)
-
-  if (result.success) {
-    showSuccess.value = true
-    setTimeout(() => {
-      navigateTo('/')
-    }, 1500)
-  } else {
-    error.value = result.message || 'Đăng ký thất bại'
-    if (result.errors) {
-      errors.value = result.errors
-    }
+  if (password.value !== confirmPassword.value) {
+    modal.show({
+      title: 'Lỗi',
+      message: 'Mật khẩu xác nhận không khớp!',
+      type: 'error'
+    })
+    return
   }
 
-  isLoading.value = false
+  loading.value = true
+  try {
+    const config = useRuntimeConfig()
+    const { data, error } = await useFetch(`${config.public.apiBase}/api/auth/register`, {
+      method: 'POST',
+      body: {
+        name: name.value,
+        email: email.value,
+        password: password.value,
+        password_confirmation: confirmPassword.value
+      }
+    })
+
+    if (error.value) {
+      modal.show({
+        title: 'Đăng ký thất bại',
+        message: error.value.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.',
+        type: 'error'
+      })
+      return
+    }
+
+    modal.show({
+      title: 'Đăng ký thành công',
+      message: 'Tài khoản của bạn đã được tạo. Vui lòng đăng nhập để tiếp tục.',
+      type: 'success',
+      confirmText: 'Đăng nhập ngay',
+      onConfirm: () => router.push('/login')
+    })
+    
+  } catch (e) {
+    console.error(e)
+    modal.show({
+      title: 'Lỗi hệ thống',
+      message: 'Không thể kết nối đến server. Vui lòng thử lại sau.',
+      type: 'error'
+    })
+  } finally {
+    loading.value = false
+  }
 }
+
+useHead({
+  title: 'Đăng ký - ExtensionHub'
+})
 </script>
-
-
-
-
-
-

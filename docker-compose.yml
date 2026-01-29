@@ -1,27 +1,47 @@
 version: '3.8'
 
 services:
-  laravel:
+  api:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: dashboard-tool-laravel
+    container_name: dashboard-tool-api
     restart: unless-stopped
-    working_dir: /var/www/html
+    working_dir: /app
     volumes:
-      - ./backend:/var/www/html
-      - ./backend/storage:/var/www/html/storage
+      - ./backend:/app
     ports:
       - "8001:8000"
     environment:
-      DB_CONNECTION: mysql
-      DB_HOST: host.docker.internal
-      DB_PORT: 3306
-      DB_DATABASE: dashboard_tool
-      DB_USERNAME: root
-      DB_PASSWORD: root
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      DATABASE_URL: postgresql+asyncpg://user:password@db:5432/dashboard_tool
+      SECRET_KEY: supersecretkey
+      ACCESS_TOKEN_EXPIRE_MINUTES: 1440 # 24 hours
+    depends_on:
+      - db
+    networks:
+      - dashboard-tool-network
+
+  db:
+    image: postgres:15
+    container_name: dashboard-tool-db
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: dashboard_tool
+    ports:
+      - "5432:5432"
+    networks:
+      - dashboard-tool-network
+
+  redis:
+    image: redis:alpine
+    container_name: dashboard-tool-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
     networks:
       - dashboard-tool-network
 
@@ -40,11 +60,14 @@ services:
     environment:
       - NUXT_HOST=0.0.0.0
       - NUXT_PORT=3001
-      - API_BASE_URL=http://localhost:8001
+      - API_BASE_URL=http://api:8000
     depends_on:
-      - laravel
+      - api
     networks:
       - dashboard-tool-network
+
+volumes:
+  postgres_data:
 
 networks:
   dashboard-tool-network:

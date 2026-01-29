@@ -3,6 +3,7 @@
     <Notivue v-slot="item">
       <Notification :item="item" />
     </Notivue>
+    <GlobalModal />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
