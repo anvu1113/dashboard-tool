@@ -9,9 +9,13 @@ from pydantic import BaseModel
 class TranslateRequest(BaseModel):
     text: str
     target_lang: str
-    engine: str = "argos" # default engine
+    source_lang: str = "en" # Default to English
+    engine: str = "auto" # default engine
+
 
 from app.services.translation import get_translation_service
+from app.services.translation_orchestrator import TranslationOrchestrator
+from app.core.exceptions import PlanNotFoundException, QuotaExceededException, FeatureNotEnabledException, LanguageNotSupportedException
 
 router = APIRouter()
 
@@ -24,22 +28,27 @@ async def translate(
     # Validation engine support
     # (Optional: check permission boolean here or let Orchestrator handle)
     
-    from app.services.translation_orchestrator import TranslationOrchestrator
     orchestrator = TranslationOrchestrator(session, current_user)
     
     try:
         result = await orchestrator.translate(
             text=req.text,
-            source='en', # Default source, ideally from req
-            target=req.target_lang, # Assuming TranslateRequest has this
-            engine_id=req.engine,
+            source=req.source_lang,
+            target=req.target_lang,
+            engine_id="auto", # Force BE to decide, ignore req.engine (often 'argos' from legacy ext)
             context="general" # Could add to req
         )
+    except PlanNotFoundException:
+        raise HTTPException(status_code=403, detail="Tài khoản chưa có gói dịch vụ. Vui lòng liên hệ hỗ trợ.")
+    except QuotaExceededException:
+         raise HTTPException(status_code=403, detail="Bạn đã dùng hết giới hạn dịch trong ngày cho gói hiện tại.")
+    except FeatureNotEnabledException:
+         raise HTTPException(status_code=403, detail="Gói cước của bạn không hỗ trợ tính năng hoặc engine dịch này.")
+    except LanguageNotSupportedException as e:
+         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        if "Quota" in str(e):
-             raise HTTPException(status_code=403, detail="Daily translation quota reached")
         print(f"Orchestrator Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Lỗi hệ thống dịch: " + str(e))
 
     return {
         "original": req.text,

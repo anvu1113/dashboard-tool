@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Install translation models (Bake into image)
+COPY install_languages.py .
+RUN python install_languages.py
+
 # Copy application code
 COPY . .
 

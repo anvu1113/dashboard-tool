@@ -6,7 +6,7 @@ import hashlib
 class CacheService:
     def __init__(self):
         self.redis_url = os.environ.get("REDIS_URL", "redis://redis:6379")
-        self.client = redis.from_url(self.redis_url, decoding_responses=True)
+        self.client = redis.from_url(self.redis_url, decode_responses=True)
 
     async def get(self, key: str):
         return await self.client.get(key)

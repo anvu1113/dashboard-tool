@@ -45,14 +45,13 @@ class SubscriptionService:
         return None
 
     async def can_use_feature(self, user: User, feature_key: str) -> bool:
+        from app.core.exceptions import PlanNotFoundException, QuotaExceededException, FeatureNotEnabledException
+        
         subscription = await self.get_active_subscription(user)
         if not subscription:
-            return False
+            raise PlanNotFoundException("No active plan found")
         
-        # Eager load plan features? SQLModel relationships are lazy by default or no?
-        # We need to fetch plan features
-        # Assuming eager load or explicit fetch
-        # Let's fetch feature
+        # Fetch plan feature
         query = select(PlanFeature).where(
             PlanFeature.plan_id == subscription.plan_id,
             PlanFeature.key == feature_key
@@ -61,12 +60,13 @@ class SubscriptionService:
         feature = result.first()
 
         if not feature:
-            return False
+            raise FeatureNotEnabledException(f"Feature {feature_key} not found in plan")
         
+        if feature.value == "false":
+            raise FeatureNotEnabledException(f"Feature {feature_key} is disabled")
+
         if feature.value == "true":
             return True
-        if feature.value == "false":
-            return False
         
         try:
             limit = int(feature.value)
@@ -82,11 +82,14 @@ class SubscriptionService:
                 log = result_log.first()
                 
                 usage = log.count if log else 0
-                return usage < limit
+                if usage >= limit:
+                    raise QuotaExceededException(f"Daily limit reached: {usage}/{limit}")
+                
+                return True
         except ValueError:
             pass
             
-        return True # Default allow if not bool/int? Or False?
+        return True
 
     async def increment_usage(self, user: User, feature_key: str):
         today_str = datetime.utcnow().strftime('%Y-%m-%d')

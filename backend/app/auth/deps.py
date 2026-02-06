@@ -19,16 +19,19 @@ async def get_current_user(
     session: AsyncSession = Depends(get_session)
 ) -> User:
     try:
+        # print(f"DEBUG: Validating token: {token[:10]}...")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         token_data = payload.get("sub")
         jti = payload.get("jti")
         
         if token_data is None:
+             print("DEBUG: Token data (sub) is None")
              raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Could not validate credentials",
             )
-    except (JWTError, ValidationError):
+    except (JWTError, ValidationError) as e:
+        print(f"DEBUG: Token validation error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",

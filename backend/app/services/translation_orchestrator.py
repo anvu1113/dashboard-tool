@@ -4,10 +4,14 @@ from app.models.phrase import TranslationPhrase
 from app.models.translation_log import TranslationLog
 from app.services.cache import get_cache_service
 from app.services.translation import get_translation_service
+from app.services.translation.argos import ArgosService
+from app.services.translation.google import GoogleService
 from app.services.subscription import SubscriptionService
 from app.models.user import User
 import json
 import time
+from datetime import datetime
+from app.core.logging import engine_logger, error_logger
 
 class TranslationOrchestrator:
     def __init__(self, session: AsyncSession, user: User):
@@ -15,88 +19,136 @@ class TranslationOrchestrator:
         self.user = user
         self.cache = get_cache_service()
         self.sub_service = SubscriptionService(session)
+        
+        # Initialize Engines
+        self.argos_engine = ArgosService()
+        self.google_engine = GoogleService()
 
-    async def translate(self, text: str, source: str, target: str, engine_id: str = "argos", context: str = "general") -> dict:
+    async def translate(self, text: str, source: str, target: str, engine_id: str = "auto", context: str = "general") -> dict:
+        print(f"DEBUG_REQUEST: translate('{text}', {source}->{target}, engine_id='{engine_id}')", flush=True)
         """
-        Layer 1: Phrase DB
-        Layer 2: Redis Cache
-        Layer 3: Engine
+        Orchestration Flow:
+        1. Redis Cache
+        2. DB (Translation Memory)
+        3. Engine Strategy (Google/Argos)
         """
         start_time = time.time()
         text_normalized = text.strip()
-        text_hash = self.cache.generate_hash(text_normalized, source, target, engine_id)
+        
+        # Normalize Language Codes (Global)
+        if source.lower() in ['zh', 'zh-cn']:
+            source = 'zh-CN'
+        if target.lower() in ['zh', 'zh-cn']:
+            target = 'zh-CN'
+            
+        # Hash based on content + lang pair (use 'hybrid_v2' to distinguish from legacy argos hashes)
+        text_hash = self.cache.generate_hash(text_normalized, source, target, "hybrid_v2") 
         
         result_data = None
         source_layer = "unknown"
-        
+        used_engine = "none"
+        confidence = 0.0
+
         try:
-            # --- Layer 1: Phrase DB ---
-            # Only for short texts
-            if len(text_normalized) < 100:
-                query = select(TranslationPhrase).where(
-                    TranslationPhrase.source_lang == source,
-                    TranslationPhrase.target_lang == target,
-                    TranslationPhrase.source_text == text_normalized
-                )
-                result = await self.session.exec(query)
-                phrase = result.first()
-                if phrase:
-                    source_layer = "db"
-                    result_data = {
-                        "translated": phrase.translated_text,
-                        "source": "db",
-                        "engine": engine_id
-                    }
+            # --- Layer 1: Redis Cache ---
+            cached_result = await self.cache.get(text_hash)
+            if cached_result:
+                used_engine = "cache" # For logging
+                return {
+                    "translated": cached_result,
+                    "source": "cache",
+                    "engine": "cache"
+                }
 
-            # --- Layer 2: Redis Cache ---
-            if not result_data:
-                cached_result = await self.cache.get(text_hash)
+            # --- Layer 2: Phrase DB (Translation Memory) ---
+            from app.models.phrase import TranslationPhrase
+            # query source_lang -> src_lang
+            query = select(TranslationPhrase).where(
+                TranslationPhrase.src_lang == source,
+                TranslationPhrase.tgt_lang == target,
+                TranslationPhrase.src_text_hash == text_hash
+            )
+            result = await self.session.exec(query)
+            phrase = result.first()
+            
+            if phrase:
+                # HIT DB
+                source_layer = "db"
+                used_engine = phrase.engine
+                translated_text = phrase.translated_text
                 
-                if cached_result:
-                    source_layer = "cache"
-                    result_data = {
-                        "translated": cached_result,
-                        "source": "cache",
-                        "engine": engine_id
-                    }
+                # Write-back to Redis
+                await self.cache.set(text_hash, translated_text, ttl=86400 * 30)
+                
+                return {
+                    "translated": translated_text,
+                    "source": "db",
+                    "engine": phrase.engine
+                }
 
-            # --- Layer 3: Engine ---
-            if not result_data:
-                source_layer = engine_id # 'argos' or 'ai'
-                
-                # 3.1 Check Quota (Delegate to SubscriptionService)
+            # --- Layer 3: External Engine ---
+            
+            # 3.1 Check User Quota
+            if self.user:
                 allowed = await self.sub_service.can_use_feature(self.user, "translate_requests")
                 if not allowed:
                      raise Exception("Quota reached")
 
-                # 3.2 Call Engine
-                translator = get_translation_service(engine_id)
-                try:
-                    translated_text = translator.translate(text_normalized, source, target)
-                except Exception as e:
-                    # Fallback or re-raise
+            # 3.2 Strategy Selection
+            primary, backup = self._select_strategy(source, target, engine_id)
+            # print(f"DEBUG_STRATEGY: Primary={primary.__class__.__name__}, Backup={backup.__class__.__name__ if backup else 'None'}")
+            
+            translated_text = None
+            
+            # Try Primary
+            try:
+                translated_text = primary.translate(text_normalized, source, target)
+                used_engine = "google" if isinstance(primary, GoogleService) else "argos"
+                confidence = 1.0 if used_engine == "google" else 0.7
+                # print(f"DEBUG_ENGINE: Success {used_engine} -> {translated_text}")
+            except Exception as e:
+                error_logger.error(f"Primary Engine ({primary}) failed: {e}")
+                print(f"CRITICAL_DEBUG: Primary Engine failed for '{text_normalized}' ({source}->{target}) | Error: {e}", flush=True)
+                # Try Backup
+                if backup:
+                    try:
+                        translated_text = backup.translate(text_normalized, source, target)
+                        used_engine = "google" if isinstance(backup, GoogleService) else "argos"
+                        confidence = 1.0 if used_engine == "google" else 0.7
+                        # print(f"DEBUG_ENGINE: Backup success {used_engine} -> {translated_text}")
+                    except Exception as e2:
+                        error_logger.error(f"Backup Engine ({backup}) failed: {e2}")
+                        # print(f"DEBUG_ENGINE: Backup failed -> {e2}")
+                        raise e2
+                else:
                     raise e
-
-                # 3.3 Save to Cache (Write-back)
-                # Determine TTL based on context (simplified logic)
-                ttl = 86400 * 30 # 30 days default
-                if context == 'description':
-                    ttl = 86400 * 30
-                elif context == 'ui':
-                    ttl = 86400 * 90
-                    
-                await self.cache.set(text_hash, translated_text, ttl=ttl)
-
-                # 3.4 Log Usage (Aggregate for Quota)
+            
+            source_layer = "engine"
+            
+            # 3.3 Save to DB (Translation Memory)
+            # Reverted 'skip save' logic as requested by user to debug
+            await self._save_phrase(
+                text=text_normalized,
+                translated=translated_text,
+                source=source,
+                target=target,
+                text_hash=text_hash,
+                engine=used_engine,
+                confidence=confidence
+            )
+            
+            # 3.4 Save to Redis
+            await self.cache.set(text_hash, translated_text, ttl=86400 * 30)
+            
+            # 3.5 Increment Quota
+            if self.user:
                 await self.sub_service.increment_usage(self.user, "translate_requests")
-                
-                result_data = {
-                    "translated": translated_text,
-                    "source": "engine",
-                    "engine": engine_id
-                }
 
-            return result_data
+            return {
+                "translated": translated_text,
+                "source": "engine",
+                "engine": used_engine
+            }
 
         finally:
             # Commit Transactional Log
@@ -104,37 +156,60 @@ class TranslationOrchestrator:
             await self._log_request(
                 text_hash=text_hash,
                 char_count=len(text_normalized),
-                engine=source_layer,
+                engine=used_engine,
                 context=context,
-                latency_ms=latency
+                latency_ms=latency,
+                source=source,
+                target=target,
+                cost=0.0
             )
 
-        # 3.4 Log Usage (Aggregate for Quota)
-        await self.sub_service.increment_usage(self.user, "translate_requests")
-        
-        # 3.5 Log Detail (For Tracking/Billing - according to V2 Design)
-        # We calculate latency strictly for engine call or end-to-end? 
-        # Design says "latency_ms" for engine request. simpler to just log end-to-end for now or engine specific.
-        # Let's log the Engine usage specifically.
-        
-        # NOTE: If we want to log CACHE hits too, we should move this logging out of the "Layer 3" block
-        # and into a `finally` or common return path. 
-        # But V2 Design says "Save Cache + Log Usage" at Step 5.
-        
-        return {
-            "translated": translated_text,
-            "source": "engine",
-            "engine": engine_id
-        }
+    def _select_strategy(self, source: str, target: str, requested_engine: str):
+        # Force specific
+        if requested_engine == "google":
+            return self.google_engine, None
+        if requested_engine == "argos":
+            return self.argos_engine, None
 
-    async def _log_request(self, text_hash: str, char_count: int, engine: str, context: str, latency_ms: int):
+        # Rule 1: Vietnamese -> Google Priority
+        if source == 'vi' or target == 'vi':
+            return self.google_engine, self.argos_engine
+        
+        # Rule 2: English <-> Chinese/Spanish -> using Argos Priority (Good enough)
+        return self.argos_engine, self.google_engine
+
+    async def _save_phrase(self, text, translated, source, target, text_hash, engine, confidence):
+        try:
+            from app.models.phrase import TranslationPhrase
+            phrase = TranslationPhrase(
+                src_lang=source,
+                tgt_lang=target,
+                src_text=text,
+                src_text_hash=text_hash,
+                translated_text=translated,
+                engine=engine,
+                confidence_score=confidence,
+                usage_count=1
+            )
+            self.session.add(phrase)
+            await self.session.commit()
+            # print("DEBUG_DB: Saved phrase successfully")
+        except Exception as e:
+            # print(f"DEBUG_DB: Failed to save phrase: {e}")
+            error_logger.error(f"Failed to save translation phrase: {e}")
+            # Do not re-raise to avoid failing the user request, just log error
+
+    async def _log_request(self, text_hash: str, char_count: int, engine: str, context: str, latency_ms: int, source: str, target: str, cost: float):
         log = TranslationLog(
             user_id=self.user.id if self.user else None,
             action="translate_text",
             engine=engine,
+            source_lang=source,
+            target_lang=target,
             text_hash=text_hash,
             char_count=char_count,
             context=context,
+            cost_estimate=cost,
             latency_ms=latency_ms
         )
         self.session.add(log)

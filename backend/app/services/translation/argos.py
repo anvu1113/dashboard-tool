@@ -1,4 +1,5 @@
 from . import TranslationService
+from app.core.exceptions import LanguageNotSupportedException
 import argostranslate.package
 import argostranslate.translate
 import os
@@ -11,19 +12,49 @@ class ArgosService(TranslationService):
         # For this implementation, we assume models act as a global registry in the library.
         pass
 
+    def normalize_code(self, code: str) -> str:
+        # Simple normalization: 'zh-CN' -> 'zh'
+        if '-' in code:
+            return code.split('-')[0]
+        return code
+
     def translate(self, text: str, source: str, target: str) -> str:
         try:
-            # Argos Translate requires language packages to be installed.
-            # We assume "en" -> "vi" and "vi" -> "en" are common.
-            # This simplistic implementation trusts the library's global state.
+            # Normalize codes
+            source = self.normalize_code(source)
+            target = self.normalize_code(target)
+
+            # Check if language pair is installed
+            installed_languages = argostranslate.translate.get_installed_languages()
+            from_lang = next((x for x in installed_languages if x.code == source), None)
+            to_lang = next((x for x in installed_languages if x.code == target), None)
             
-            # Check if language pair is installed, if not, try to install (Be careful with this in prod)
-            # For robustness, we should have a separate 'install_languages' step.
+            if not from_lang or not to_lang:
+                 available_codes = [x.code for x in installed_languages]
+                 raise LanguageNotSupportedException(f"Language pair {source}->{target} is not installed. Available: {available_codes}")
+
+            # Try Direct Translation
+            translation = from_lang.get_translation(to_lang)
+            if translation:
+                return translation.translate(text)
             
-            return argostranslate.translate.translate(text, source, target)
+            # Try Pivot via English (if source/target is not English)
+            if source != 'en' and target != 'en':
+                en_lang = next((x for x in installed_languages if x.code == 'en'), None)
+                if en_lang:
+                    # Check source -> en
+                    to_en = from_lang.get_translation(en_lang)
+                    # Check en -> target
+                    from_en = en_lang.get_translation(to_lang)
+                    
+                    if to_en and from_en:
+                        # Perform pivot translation
+                        intermediate = to_en.translate(text)
+                        return from_en.translate(intermediate)
+
+            raise LanguageNotSupportedException(f"Translation model from {source} to {target} not available (Direct or Pivot).")
         except Exception as e:
             print(f"Argos Translation Error: {e}")
-            # Fallback or re-raise
             raise e
 
     @staticmethod

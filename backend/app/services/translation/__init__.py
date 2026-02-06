@@ -18,6 +18,7 @@ class TranslationService(ABC):
         pass
 
 from .argos import ArgosService
+from .google import GoogleService
 
 def get_translation_service(engine_id: str = "argos") -> TranslationService:
     if engine_id == "argos":

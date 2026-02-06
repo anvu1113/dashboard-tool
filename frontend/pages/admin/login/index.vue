@@ -50,13 +50,28 @@ const password = ref('')
 const loading = ref(false)
 const router = useRouter()
 
+const { login } = useAuth()
+// const router = useRouter() // Already defined
+const toast = useToast()
+
 const handleLogin = async () => {
   loading.value = true
-  // Simulate login delay
-  setTimeout(() => {
+  try {
+    const res = await login(email.value, password.value)
+    
+    if (res.success) {
+        toast.success('Đăng nhập thành công')
+        // useAuth handles state/cookie update
+        // Redirect
+        router.push('/admin/dashboard') 
+    } else {
+        toast.error(res.message || 'Đăng nhập thất bại')
+    }
+  } catch (e) {
+      toast.error('Có lỗi xảy ra: ' + e.message)
+  } finally {
     loading.value = false
-    router.push('/admin/dashboard')
-  }, 1000)
+  }
 }
 
 useHead({

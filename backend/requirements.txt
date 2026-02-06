@@ -10,3 +10,4 @@ httpx
 pydantic-settings
 argostranslate
 redis
+deep-translator
