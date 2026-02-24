@@ -55,7 +55,15 @@ async def get_current_user(
         await session.commit()
 
     # token_data is user_id
-    user = await session.get(User, int(token_data))
+    from sqlalchemy.orm import selectinload
+    from app.models.role import Role
+    
+    query = select(User).where(User.id == int(token_data)).options(
+        selectinload(User.roles).selectinload(Role.permissions)
+    )
+    result = await session.exec(query)
+    user = result.first()
+    
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     

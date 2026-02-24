@@ -70,6 +70,7 @@
 <script setup>
 definePageMeta({
   layout: 'admin',
+  permissions: ['cache.view']
 })
 
 const caches = ref([])

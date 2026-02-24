@@ -95,6 +95,7 @@
 <script setup>
 definePageMeta({
   layout: 'admin',
+  permissions: ['dashboard.view']
   // middleware: 'admin-auth' // Uncomment when middleware is ready
 })
 

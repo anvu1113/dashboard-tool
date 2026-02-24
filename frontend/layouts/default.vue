@@ -18,9 +18,17 @@
             </div>
           </div>
           <div>
-             <NuxtLink to="/admin/login" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-primary/50">
-              Đăng nhập
-            </NuxtLink>
+            <div v-if="user" class="flex items-center gap-4">
+               <span class="text-gray-300 text-sm hidden md:block">Hi, {{ user.name || user.email }}</span>
+               <NuxtLink to="/admin/dashboard" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-primary/50">
+                Dashboard
+              </NuxtLink>
+            </div>
+            <div v-else>
+               <NuxtLink to="/admin/login" class="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-lg hover:shadow-primary/50">
+                Đăng nhập
+              </NuxtLink>
+            </div>
           </div>
         </div>
       </div>
@@ -65,3 +73,7 @@
     </footer>
   </div>
 </template>
+
+<script setup>
+const { user } = useAuth()
+</script>

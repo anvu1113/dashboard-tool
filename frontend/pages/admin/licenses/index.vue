@@ -47,7 +47,8 @@
 
 <script setup>
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin',
+  permissions: ['licenses.view']
 })
 useHead({
   title: 'Quản lý License - Admin'

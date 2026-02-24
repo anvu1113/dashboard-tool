@@ -4,3 +4,4 @@ from .supported_domain import SupportedDomain, SupportedDomainCreate, SupportedD
 from .session import UserSession
 from .phrase import TranslationPhrase
 from .translation_log import TranslationLog
+from .currency_rate import CurrencyRate, CurrencyRateCreate, CurrencyRateRead, CurrencyRateUpdate

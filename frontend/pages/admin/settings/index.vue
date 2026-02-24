@@ -77,7 +77,8 @@
 
 <script setup>
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin',
+  permissions: ['settings.view']
 })
 useHead({
   title: 'Cài đặt - Admin'

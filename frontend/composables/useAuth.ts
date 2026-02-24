@@ -9,8 +9,18 @@ export const useAuth = () => {
     maxAge: 60 * 60 * 24 * 7,
     path: '/'
   })
+
+  // Store permissions in cookie? maybe too large. 
+  // For now let's keep in state and hydrate from userCookie if possible OR just rely on fetchUser on init
+  // But spec says: Reload page (hydrate from localStorage / cookie)
+  // Let's store in cookie for persistence across reload without waiting for API
+  const permissionsCookie = useCookie<string[]>('auth_permissions', {
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/'
+  })
   
   const user = useState<any>('auth.user', () => userCookie.value || null)
+  const permissions = useState<string[]>('auth.permissions', () => permissionsCookie.value || [])
   const { getApiBase } = useApi()
 
   // Check if user is authenticated
@@ -23,11 +33,16 @@ export const useAuth = () => {
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
-        role: newUser.role
+        role: newUser.role,
+        is_super_admin: newUser.is_super_admin
       }
     } else {
       userCookie.value = null
     }
+  })
+
+  watch(permissions, (newPerms) => {
+     permissionsCookie.value = newPerms || []
   })
 
   // Login
@@ -44,6 +59,8 @@ export const useAuth = () => {
       if (response.success) {
         user.value = response.data.user
         token.value = response.data.token
+        permissions.value = response.data.permissions || []
+        // roles.value = response.data.roles || [] // If we need roles state
         return { success: true, data: response.data }
       }
 
@@ -73,6 +90,7 @@ export const useAuth = () => {
       if (response.success) {
         user.value = response.data.user
         token.value = response.data.token
+        permissions.value = [] // Register usually doesn't give advanced permissions immediately
         return { success: true, data: response.data }
       }
 
@@ -102,7 +120,9 @@ export const useAuth = () => {
     } finally {
       user.value = null
       token.value = null
+      permissions.value = []
       userCookie.value = null
+      permissionsCookie.value = null
       navigateTo('/login')
     }
   }
@@ -121,13 +141,16 @@ export const useAuth = () => {
       if (response.success) {
         // This will trigger the watcher to update userCookie
         user.value = response.data.user
+        permissions.value = response.data.permissions || []
         return { success: true, user: response.data.user }
       }
     } catch (error) {
       // Token invalid, clear auth
       user.value = null
       token.value = null
+      permissions.value = []
       userCookie.value = null
+      permissionsCookie.value = null
     }
   }
 
@@ -188,10 +211,31 @@ export const useAuth = () => {
       }
     }
   }
+  
+  // Permission Helpers
+  const hasPermission = (permission: string): boolean => {
+    // Super admin check?
+    if (user.value?.is_super_admin) return true;
+    if (permissions.value.includes('*')) return true;
+    return permissions.value.includes(permission)
+  }
+
+  const hasAnyPermission = (perms: string[]): boolean => {
+    if (user.value?.is_super_admin) return true;
+    if (permissions.value.includes('*')) return true;
+    return perms.some(p => permissions.value.includes(p))
+  }
+
+  const hasAllPermissions = (perms: string[]): boolean => {
+    if (user.value?.is_super_admin) return true;
+    if (permissions.value.includes('*')) return true;
+    return perms.every(p => permissions.value.includes(p))
+  }
 
   return {
     user: readonly(user),
     token: readonly(token),
+    permissions: readonly(permissions),
     isAuthenticated,
     login,
     register,
@@ -199,7 +243,10 @@ export const useAuth = () => {
     fetchUser,
     initAuth,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions
   }
 }
 

@@ -65,7 +65,14 @@ async def login(
     email = login_data.get("email")
     password = login_data.get("password")
 
-    result = await session.exec(select(User).where(User.email == email))
+    # Eager load roles and permissions
+    from sqlalchemy.orm import selectinload
+    from app.models.role import Role
+    
+    query = select(User).where(User.email == email).options(
+        selectinload(User.roles).selectinload(Role.permissions)
+    )
+    result = await session.exec(query)
     user = result.first()
 
     if not user or not verify_password(password, user.hashed_password):
@@ -86,20 +93,59 @@ async def login(
     await session.commit()
 
     access_token = create_access_token(user.id, jti=jti)
+    
+    # Flatten permissions
+    permissions = set()
+    roles = []
+    if user.is_super_admin:
+        permissions.add("*") # Or handle super admin logic in FE differently. 
+        # Typically super admin has all. For now let's just mark it.
+        # Actually user spec says backend checks permissions.
+        # But for FE display, maybe we send a special flag or all permissions?
+        # Let's send all existing permissions if super admin? Or just "*" and FE handles it?
+        # FE Helper: if user.is_super_admin return true.
+        roles.append("super_admin")
+    
+    if user.roles:
+        for role in user.roles:
+            roles.append(role.code)
+            if role.permissions:
+                for perm in role.permissions:
+                    permissions.add(perm.code)
+    
     return {
         "success": True, 
         "data": {
             "token": access_token,
             "token_type": "bearer",
-            "user": user
+            "user": user,
+            "roles": roles,
+            "permissions": list(permissions)
         }
     }
 
 @router.get("/me", response_model=dict)
 async def read_users_me(current_user: User = Depends(get_current_user)):
+    # Current user from deps already has roles/permissions loaded if we updated deps.py correctly
+    # deps.py get_current_user was updated to use selectinload.
+    
+    permissions = set()
+    roles = []
+    if current_user.is_super_admin:
+        roles.append("super_admin")
+    
+    if current_user.roles:
+        for role in current_user.roles:
+            roles.append(role.code)
+            if role.permissions:
+                for perm in role.permissions:
+                    permissions.add(perm.code)
+
     return {
         "success": True,
         "data": {
-            "user": current_user
+            "user": current_user,
+            "roles": roles,
+            "permissions": list(permissions)
         }
     }

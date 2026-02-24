@@ -11,7 +11,7 @@ from app.models.user import User
 import json
 import time
 from datetime import datetime
-from app.core.logging import engine_logger, error_logger
+from app.core.logger import engine_logger, error_logger
 
 class TranslationOrchestrator:
     def __init__(self, session: AsyncSession, user: User):

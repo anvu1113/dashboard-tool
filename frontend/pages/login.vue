@@ -35,15 +35,25 @@
           <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
             Mật khẩu
           </label>
-          <input
-            id="password"
-            v-model="form.password"
-            type="password"
-            required
-            placeholder="Nhập mật khẩu"
-            class="block w-full bg-bg-dark border border-gray-600 text-white rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-            :class="{ 'border-red-500': errors.password }"
-          />
+          <div class="relative">
+            <input
+              id="password"
+              v-model="form.password"
+              :type="showPassword ? 'text' : 'password'"
+              required
+              placeholder="Nhập mật khẩu"
+              class="block w-full bg-bg-dark border border-gray-600 text-white rounded-lg py-3 px-4 pr-10 focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
+              :class="{ 'border-red-500': errors.password }"
+            />
+            <button
+              type="button"
+              @click="showPassword = !showPassword"
+              class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-200 transition-colors"
+            >
+              <EyeIcon v-if="!showPassword" class="w-5 h-5" />
+              <EyeSlashIcon v-else class="w-5 h-5" />
+            </button>
+          </div>
           <p v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</p>
         </div>
 
@@ -109,6 +119,9 @@ useHead({
 
 const { login } = useAuth()
 const router = useRouter()
+import { EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
+
+const showPassword = ref(false)
 
 const form = ref({
   email: '',

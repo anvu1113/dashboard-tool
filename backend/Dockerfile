@@ -2,22 +2,22 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies
+# system deps
 RUN apt-get update && apt-get install -y \
     build-essential \
-    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install python dependencies
+# ===== INSTALL PYTHON LIBS (CACHE LAYER QUAN TRỌNG) =====
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
-# Install translation models (Bake into image)
+RUN pip install -U pip setuptools wheel && \
+    pip install --prefer-binary -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+
+# ===== INSTALL ARGOS MODELS =====
 COPY install_languages.py .
 RUN python install_languages.py
 
-# Copy application code
+# ===== COPY SOURCE CODE LAST =====
 COPY . .
 
-# Run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

@@ -9,3 +9,5 @@ venv/
 .DS_Store
 .coverage
 htmlcov/
+dump_postgres.sql
+verify_rbac.py

@@ -88,6 +88,7 @@
 <script setup>
 definePageMeta({
   layout: 'admin',
+  permissions: ['supported_domains.view']
 })
 
 const domains = ref([])

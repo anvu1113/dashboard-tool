@@ -98,6 +98,7 @@
 <script setup>
 definePageMeta({
   layout: 'admin',
+  permissions: ['plans.view']
   // middleware: 'auth'
 })
 
